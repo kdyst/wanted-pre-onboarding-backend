@@ -113,10 +113,10 @@ def create_post():
         return ({'status':'Fail'}, 400)
     
     #post it
-    post_id = db_entry.create_post(user_id, title, content)
+    db_entry.create_post(user_id, title, content)
     
     #return post_id
-    return ({'status':'Success', 'post_id':post_id}, 200)
+    return ({'status':'Success'}, 200)
 
 
 #get the number of pages

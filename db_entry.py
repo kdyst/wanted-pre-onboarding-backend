@@ -1,117 +1,153 @@
-#This is naive non-mysql code.
-#It must be re-written.
-
-from bisect import bisect_left
-
-post_cnt = 0
-user_table = dict()
-post_table = list()
+from db_lib import connect
+from db_lib import command
 
 
 #(user_id, password) --> bool
 def create_user(user_id, password):
-    global user_table, post_table, post_cnt
+    cnx = connect()
+    cursor = cnx.cursor()
     
-    if user_id in user_table:
-        return False
-    user_table[user_id] = password
-    return True
+    cursor.execute(command['GetPassword'], (user_id, ))
+    ret = list(cursor.fetchall())
+    
+    empty = (len(ret) == 0)
+    if empty:
+        cursor.execute(command['SignUp'],(user_id, password))
+        cnx.commit();
+    
+    cursor.close()
+    cnx.close()
+    return empty
 
 
 #(user_id) --> password:str or None
 def find_user(user_id):
-    global user_table, post_table, post_cnt
+    cnx = connect()
+    cursor = cnx.cursor()
     
-    return user_table.get(user_id)
+    cursor.execute(command['GetPassword'], (user_id, ))
+    ret = list(cursor.fetchall())
+    
+    cursor.close()
+    cnx.close()
+    
+    password = None
+    if len(ret) == 0:
+        return None
+    
+    return bytes(ret[0][0])
 
 
-#(user_id, title, content) --> post_id:int
+#(user_id, title, content) --> None
 def create_post(user_id, title, content):
-    global user_table, post_table, post_cnt
+    cnx = connect()
+    cursor = cnx.cursor()
     
-    post_id = post_cnt
-    post_table.append((post_id, user_id, title, content))
-    post_cnt += 1
-    return post_id
+    cursor.execute(command['CreatePost'],(user_id, title, content))
+    cnx.commit();
+    
+    cursor.close()
+    cnx.close()
 
 
 #(None) --> int
 def get_pagecnt():
-    global user_table, post_table, post_cnt
+    cnx = connect()
+    cursor = cnx.cursor()
     
-    return len(post_table)
+    cursor.execute(command['GetPostCnt'])
+    ret = list(cursor.fetchall())
+    
+    cursor.close()
+    cnx.close()
+    
+    return ret[0][0]
 
 
 #(page_id, unit) --> arr: list<dict<post_id, user_id, title>>
 def get_page(page_id, unit):
-    global user_table, post_table, post_cnt
-
-    left = min(max(page_id * unit, 0), len(post_table))
-    right = min(left + unit, len(post_table))
-    arr = []
-    for i in range(left, right):
-        j = len(post_table) - 1 - i
-        post_id = post_table[i][0]
-        user_id = post_table[i][1]
-        title = post_table[i][2]
-        arr.append({\
+    cnx = connect()
+    cursor = cnx.cursor()
+    
+    cursor.execute(command['GetPostCnt'])
+    sz = list(cursor.fetchall())[0][0]
+    
+    offset = page_id * unit
+    
+    cursor.execute(command['GetPage'], (unit, offset))
+    
+    ret = []
+    for (post_id, user_id, title) in cursor:
+        ret.append({\
             'post_id':post_id\
             , 'user_id':user_id\
             , 'title':title\
         })
-    return arr
+    
+    cursor.close()
+    cnx.close()
+
+    return ret
 
 
 #(post_id) --> dict<post_id, user_id, title, content> or None
 def get_post(post_id):
-    global user_table, post_table, post_cnt
-
-    i = bisect_left(post_table, post_id, \
-        key=lambda x: x[0] if type(x) == tuple else x\
-    )
-    if i == len(post_table) or post_id != post_table[i][0]:
+    cnx = connect()
+    cursor = cnx.cursor()
+    
+    cursor.execute(command['GetPost'], (post_id, ))
+    ret = list(cursor.fetchall())
+    
+    cursor.close()
+    cnx.close()
+    
+    if len(ret) != 1 or post_id != ret[0][0]:
         return None
     
     return {\
-        'post_id' : post_table[i][0]\
-        , 'user_id' : post_table[i][1]\
-        , 'title' : post_table[i][2]\
-        , 'content' : post_table[i][3]\
+        'post_id' : ret[0][0]\
+        , 'user_id' : ret[0][1]\
+        , 'title' : ret[0][2]\
+        , 'content' : ret[0][3]\
     }
 
 
 #(post_id, user_id, title, content) --> bool
 def patch_post(post_id, user_id, title = None, content = None):
-    global user_table, post_table, post_cnt
-
-    i = bisect_left(post_table, post_id, \
-        key=lambda x: x[0] if type(x) == tuple else x\
-    )
-    if i == len(post_table) or\
-        post_id != post_table[i][0] or\
-        user_id != post_table[i][1]:
-        return False
-    if title == None:
-        title = post_table[i][2]
-    if content == None:
-        content = post_table[i][3]
+    cnx = connect()
+    cursor = cnx.cursor()
     
-    post_table[i] = (post_id, user_id, title, content)
-    return True
+    cursor.execute(command['GetPost'], (post_id, ))
+    ret = list(cursor.fetchall())
+    
+    success = (len(ret) != 0 and ret[0][1] == user_id)
+    if success:
+        if title != None:
+            cursor.execute(command['ChangeTitle'], (title, post_id))
+        if content != None:
+            cursor.execute(command['ChangeContent'], (content, post_id))
+        cnx.commit()
+    
+    cursor.close()
+    cnx.close()
+    
+    return success
 
 
 #(post_id, user_id) --> bool
 def delete_post(post_id, user_id):
-    global user_table, post_table, post_cnt
-
-    i = bisect_left(post_table, post_id, \
-        key=lambda x: x[0] if type(x) == tuple else x\
-    )
-    if i == len(post_table) or\
-        post_id != post_table[i][0] or\
-        user_id != post_table[i][1]:
-        return True
-    if post_table[i][1] != user_id:
-        return False
-    post_table.pop(i)
-    return True
+    cnx = connect()
+    cursor = cnx.cursor()
+    
+    cursor.execute(command['GetPost'], (post_id, ))
+    ret = list(cursor.fetchall())
+    
+    success = (len(ret) != 0 and ret[0][1] == user_id)
+    if success:
+        cursor.execute(command['DeletePost'], (post_id, ))
+        cnx.commit()
+    
+    cursor.close()
+    cnx.close()
+    
+    return success
