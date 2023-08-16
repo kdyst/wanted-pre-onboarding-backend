@@ -30,18 +30,12 @@ CREATE TABLE `post_table` (
   PRIMARY KEY (`post_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `post_table_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user_table` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `post_table`
 --
-
-LOCK TABLES `post_table` WRITE;
-/*!40000 ALTER TABLE `post_table` DISABLE KEYS */;
-INSERT INTO `post_table` VALUES (1,'k1671k@naver.com','안녕하세요.','저는 이번에 참가하는 사람입니다.'),(2,'k1671k@naver.com','참고 해라','내용을 바꾸자'),(3,'dyst2001@naver.com','이름을 바꾸자','내용을 바꾸자'),(5,'k1671k@naver.com','제목과 내용이','동시에!!!'),(6,'dyst2001@naver.com','참고 해라','참고 하라고 ㅋㅋㅋㅋㅋ'),(7,'dyst2001@naver.com','공지뜸','부기');
-/*!40000 ALTER TABLE `post_table` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `user_table`
@@ -61,11 +55,6 @@ CREATE TABLE `user_table` (
 -- Dumping data for table `user_table`
 --
 
-LOCK TABLES `user_table` WRITE;
-/*!40000 ALTER TABLE `user_table` DISABLE KEYS */;
-INSERT INTO `user_table` VALUES ('dyst2001@naver.com',_binary '$2b$12$qEYyj43l38U6HOyib7ro.eY9qtrt0Ueb6yDlX4sid1ohFlHZUQcJC'),('k1671k@naver.com',_binary '$2b$12$5Ow1Kj5n2oCQpUrR/Nop0.oJHcdN1rerre7t77dXM.686WbM8Iuom');
-/*!40000 ALTER TABLE `user_table` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

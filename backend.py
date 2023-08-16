@@ -37,20 +37,20 @@ def sign_up():
         email = data['email']
         password = data['password']
     except KeyError:
-        return ('Fail', 400)
+        return ({'status': 'Fail'}, 400)
     
     #check email and password
     if not check_email_and_password(email, password):
-        return ('Fail', 400)
+        return ({'status': 'Fail'}, 400)
     
     #hash the password
     hash_code = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
     #register
     if not db_entry.create_user(email, hash_code):
-        return ('Fail', 400)
+        return ({'status': 'Fail'}, 400)
     
-    return ('Success', 200)
+    return ({'status':'Success'}, 200)
 
 
 #sign in(or login)
@@ -179,7 +179,7 @@ def patch_post(post_id):
     #user-id
     user_id = get_jwt_identity()
     if user_id == None:
-        return ('Fail', 401)
+        return ({'status': 'Fail'}, 401)
     
     #read from json
     data = request.get_json()
@@ -188,9 +188,9 @@ def patch_post(post_id):
     
     #fix the post
     if not db_entry.patch_post(post_id, user_id, title, content):
-        return ('Fail', 403)
+        return ({'status': 'Fail'}, 403)
     
-    return ('Success', 200)
+    return ({'status':'Success'}, 200)
 
 
 #erase the post
@@ -200,13 +200,13 @@ def delete_post(post_id):
     #user-id
     user_id = get_jwt_identity()
     if user_id == None:
-        return ('Fail', 401)
+        return ({'status': 'Fail'}, 401)
     
     #erase the post
     if not db_entry.delete_post(post_id, user_id):
-        return ('Fail', 403)
+        return ({'status': 'Fail'}, 403)
     
-    return ('Success', 200)
+    return ({'status':'Success'}, 200)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
