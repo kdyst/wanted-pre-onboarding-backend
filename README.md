@@ -78,7 +78,7 @@
     >
     > 위에서 backend와 mysql 이미지를 확인할 수 있다.
 
-    > docker rmi $(이미지 이름: backend 혹은 mysql)
+    > docker rmi $(이미지 이름: backend 혹은 mysql:8.0)
     >
     > "docker images"에서 확인할 수 있는 이미지를 지우는 명령어
 
